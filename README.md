@@ -1,2 +1,2 @@
-# gmail-email-downloader
+# gcs-email-downloader
 Google mail email downloader as pdf to local storage
