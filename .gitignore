@@ -1,3 +1,8 @@
+sandbox.py
+firebaseAuth.json
+gcsAuth.json
+.env
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
