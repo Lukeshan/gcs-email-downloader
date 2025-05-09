@@ -1,10 +1,9 @@
-
-from flask import Flask, request
+from flask import Flask, request, redirect, url_for, session
 from requests_oauthlib import OAuth2Session
 import os
 from dotenv import load_dotenv
-
-
+import requests
+import json
 
 # Enable HTTPS enforcement
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "0"
@@ -33,18 +32,42 @@ def home():
     auth_url, _ = oauth.authorization_url(AUTH_URL)
     return f'<a href="{auth_url}">Login with Google</a>'
 
+@app.route("/success")
+def success(labels=None):
+    data = request.args.get("data", "[]")
+    labels = json.loads(data)
+    return f"<a>Success! Check out the terminal</a> </br> <a> List of labels = {listOfLabels(labels)}</a>"
 
 @app.route("/callback")
 def callback():
     """ Handle OAuth callback and fetch emails """
     token = oauth.fetch_token(TOKEN_URL, client_secret=CLIENT_SECRET, authorization_response=request.url)
-    emails = fetch_emails(token)
-    return {"Access Token": token['access_token'], "Emails": emails}
+    rawLabels = fetch_labels(token)
+    labels = refinedLabels(rawLabels)
 
-def fetch_emails(token):
-    """ Placeholder """
-    print(token)
-    return "placeholder email fetch function"
+    return redirect(url_for("success", data=json.dumps(labels)))
+
+def refinedLabels(rawLabels):
+    for label in rawLabels:
+        label["displayName"] = label["name"].lower().replace("_"," ").title()
+    return rawLabels
+
+def listOfLabels(labels):
+    listol = []
+    for label in labels:
+        listol.append(label["displayName"])
+    return listol
+
+def fetch_labels(token):
+    """ Fetch Gmail labels """
+    headers = {"Authorization": f"Bearer {token['access_token']}"}
+    response = requests.get("https://gmail.googleapis.com/gmail/v1/users/me/labels", headers=headers)
+    with open('filteredResponse.json', 'w') as f:
+        f.write(str(response.json().get("labels", [])))
+    if response.status_code == 200:
+        return response.json().get("labels", [])
+    else:
+        return f"Error fetching labels: {response.status_code}, {response.text}"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
