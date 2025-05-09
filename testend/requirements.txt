@@ -1,0 +1,9 @@
+inquirer
+firebase-admin 
+google-auth 
+google-auth-oauthlib 
+google-auth-httplib2
+flask
+python-dotenv
+gunicorn
+flask_cors
